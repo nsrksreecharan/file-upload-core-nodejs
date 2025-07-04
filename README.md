@@ -110,5 +110,3 @@ node server.js
 
 Server starts at: `http://localhost:5000`
 
-Use **Postman** or **cURL** to test endpoints.
----
