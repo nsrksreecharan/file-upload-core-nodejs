@@ -11,7 +11,7 @@ This is a **core Node.js project** that implements file upload, download, read, 
 
 ---
 
-## 🧠 Features
+## Features
 
 ### ✅ Upload a JSON File (Raw Body)
 
