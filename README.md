@@ -232,6 +232,4 @@ Here’s a **structured point-wise explanation** of the core Node.js file server
 
 ---
 
-Let me know if you want a cheat sheet or diagram version of this summary too.
-
 
