@@ -109,3 +109,129 @@ node server.js
 
 Server starts at: `http://localhost:5000`
 
+Here’s a **structured point-wise explanation** of the core Node.js file server functionalities, specifically focusing on:
+
+* 🔽 Downloading single file
+* 📦 Downloading whole folder
+* ⬆️ Uploading single file (multipart/form-data)
+* ⬆️ Uploading multiple files (multipart/form-data)
+
+---
+
+## 🔽 1. Download Single File
+
+**Route:** `GET /download?file=filename.ext`
+
+### ✅ How It Works:
+
+1. Extracts `filename` from query param using `URL` API.
+2. Checks if file exists using `fs.existsSync`.
+3. Sends file as a downloadable stream:
+
+   * Sets headers:
+
+     * `"Content-Disposition": attachment; filename="filename.ext"`
+     * `"Content-Type": application/octet-stream"`
+4. Streams file with `fs.createReadStream(filePath).pipe(res)`.
+5. Handles stream error with `fileStream.on("error")`.
+
+---
+
+## 📦 2. Download Entire Folder as Archive
+
+**Route:** `GET /download-folder`
+
+### ✅ How It Works:
+
+1. Defines archive name: `"archive.tar.gz"` using `.tar.gz` format.
+2. Uses Node's `spawn()` from `child_process` to run Linux shell command:
+
+   ```bash
+   tar -czf archive.tar.gz uploads/
+   ```
+
+   * `-c`: create
+   * `-z`: gzip compression
+   * `-f`: output filename
+3. On `close` event of tar process:
+
+   * Sets download headers:
+
+     * `"Content-Disposition": attachment; filename="archive.tar.gz"`
+     * `"Content-Type": application/gzip"`
+   * Streams archive file using `fs.createReadStream`.
+   * Deletes the `.tar.gz` file from disk after stream ends (`fs.unlinkSync()`).
+
+> ⚠️ Works only if `tar` is available (Linux/macOS/WSL/Git Bash).
+
+---
+
+## ⬆️ 3. Upload Single File (multipart/form-data)
+
+**Route:** `POST /upload-multi-form-file`
+
+### ✅ How It Works:
+
+1. Extracts `boundary` from `Content-Type` header.
+2. Reads raw body as `"binary"` using `req.on("data")`.
+3. Splits body using boundary into parts.
+4. Finds the part that includes `filename=`.
+5. Uses RegEx to extract:
+
+   * `filename`
+   * Binary file data after 4 line breaks (`\r\n\r\n`)
+6. Writes file using `fs.writeFile(path, data, "binary")`.
+
+> This handles exactly **one file** per request.
+
+---
+
+## ⬆️ 4. Upload Multiple Files (multipart/form-data)
+
+**Route:** `POST /upload-multi-form-files`
+
+### ✅ How It Works:
+
+1. Same as above: parse `boundary` and raw binary body.
+2. Filters all parts where `filename=` exists → multiple parts.
+3. Loops through all `parts`:
+
+   * Extracts filename: `filename="..."`.
+   * Uses RegEx to extract file binary:
+
+     ```js
+     fileDataMatch = part.match(/\r\n\r\n([\s\S]*?)$/);
+     ```
+   * Trims off boundary ending using `replace(/\r\n--$/, "")`.
+4. Saves each file using `fs.writeFile(path, binary)`.
+
+> Allows multiple files from a single form-data request.
+
+---
+
+## 🧠 Differences Summary
+
+| Feature              | Single File Upload          | Multiple File Upload          |
+| -------------------- | --------------------------- | ----------------------------- |
+| Route                | `/upload-multi-form-file`   | `/upload-multi-form-files`    |
+| Parts handling       | `find()` → single part      | `filter()` → all parts        |
+| File data extraction | Simple split by `\r\n\r\n`  | Regex to match until boundary |
+| Filename handling    | Regex from `filename="..."` | Same                          |
+| Loop used            | None / Single write         | `forEach()` loop              |
+| Edge Cases           | Missing filename/file check | Checks per file               |
+
+---
+
+## 🧪 Bonus Learnings (from this project)
+
+* How `multipart/form-data` is structured in raw body.
+* Why boundaries are needed in file uploads.
+* When to use `binary` encoding.
+* Difference between `fs.readFileSync`, `fs.createReadStream`, and streaming pipes.
+* How to download large folders using `tar` archive + stream.
+
+---
+
+Let me know if you want a cheat sheet or diagram version of this summary too.
+
+
