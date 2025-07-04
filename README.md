@@ -92,11 +92,10 @@ Deletes a specified file from `/uploads` using `fs.unlinkSync()`.
 ---
 
 ## 💡 Key Concepts Practiced
-
+* Using fs.reaFile and fs.writeFile sync and async
 * Manual `multipart/form-data` parsing (without `formidable`, `busboy`, or `multer`)
 * Handling raw file buffers and writing them using `fs`
 * Using `child_process.spawn()` to call Linux commands like `tar`
-* Clean MVC-like separation, even without frameworks
 * Using `Content-Disposition` for downloads
 * `URL` class for parsing query params
 
